@@ -61,7 +61,6 @@ OPTION( BUILD_SHARED_LIBS
   "Build package with shared libraries."
   ON
 )
-
 OPTION( ASSIMP_BUILD_FRAMEWORK
   "Build package as Mac OS X Framework bundle."
   OFF
@@ -133,9 +132,22 @@ OPTION ( ASSIMP_IGNORE_GIT_HASH
 )
 
 IF ( WIN32 )
-    OPTION ( ASSIMP_BUILD_ASSIMP_VIEW
-      "If the Assimp view tool is built. (requires DirectX)"
-      OFF )
+  # Use subset of Windows.h
+  ADD_DEFINITIONS( -DWIN32_LEAN_AND_MEAN )
+
+  OPTION ( ASSIMP_BUILD_ASSIMP_VIEW
+    "If the Assimp view tool is built. (requires DirectX)"
+    OFF )
+
+  IF(MSVC)
+    OPTION( ASSIMP_INSTALL_PDB
+      "Install MSVC debug files."
+      ON )
+    IF(NOT (MSVC_VERSION LESS 1900))
+      # Multibyte character set is deprecated since at least MSVC2015 (possibly earlier)
+      ADD_DEFINITIONS( -DUNICODE -D_UNICODE )
+    ENDIF()
+  ENDIF()
 ENDIF()
 
 IF (IOS AND NOT ASSIMP_HUNTER_ENABLED)
@@ -145,21 +157,6 @@ IF (IOS AND NOT ASSIMP_HUNTER_ENABLED)
   ADD_DEFINITIONS(-DENABLE_BITCODE)
 ENDIF ()
 
-# Use subset of Windows.h
-if (WIN32)
-  ADD_DEFINITIONS( -DWIN32_LEAN_AND_MEAN )
-endif()
-
-IF(MSVC)
-  OPTION( ASSIMP_INSTALL_PDB
-    "Install MSVC debug files."
-    ON
-  )
-  IF(NOT (MSVC_VERSION LESS 1900))
-    # Multibyte character set is deprecated since at least MSVC2015 (possibly earlier)
-    ADD_DEFINITIONS( -DUNICODE -D_UNICODE )
-  ENDIF()
-ENDIF()
 
 IF (ASSIMP_BUILD_FRAMEWORK)
   SET (BUILD_SHARED_LIBS ON)
@@ -261,7 +258,7 @@ IF ((CMAKE_C_COMPILER_ID MATCHES "GNU") AND NOT CMAKE_COMPILER_IS_MINGW)
   ENDIF()
 ELSEIF(MSVC)
   # enable multi-core compilation with MSVC
-  IF( "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" ) # clang-cl
+  IF(CMAKE_CXX_COMPILER_ID MATCHES "Clang" ) # clang-cl
     ADD_COMPILE_OPTIONS(/bigobj /W4 /WX )
   ELSE() # msvc
     ADD_COMPILE_OPTIONS(/MP /bigobj /W4 /WX)
@@ -271,7 +268,7 @@ ELSEIF(MSVC)
     ADD_COMPILE_OPTIONS(/wd4351)
   ENDIF()
   SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /D_DEBUG /Zi /Od")
-ELSEIF ( "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" )
+ELSEIF (CMAKE_CXX_COMPILER_ID MATCHES "Clang" )
   IF(NOT ASSIMP_HUNTER_ENABLED)
     SET(CMAKE_CXX_STANDARD 11)
     SET(CMAKE_POSITION_INDEPENDENT_CODE ON)
