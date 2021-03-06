@@ -3,7 +3,7 @@
 Open Asset Import Library (assimp)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2020, assimp team
+Copyright (c) 2006-2021, assimp team
 
 All rights reserved.
 
@@ -266,6 +266,7 @@ void Discreet3DSImporter::ParseMainChunk() {
 
     case Discreet3DS::CHUNK_PRJ:
         bIsPrj = true;
+        break;
     case Discreet3DS::CHUNK_MAIN:
         ParseEditorChunk();
         break;
