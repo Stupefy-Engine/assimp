@@ -97,6 +97,9 @@ glTF2Exporter::glTF2Exporter(const char* filename, IOSystem* pIOSystem, const ai
 
     mAsset.reset( new Asset( pIOSystem ) );
 
+    // Always on as our triangulation process is aware of this type of encoding
+    mAsset->extensionsUsed.FB_ngon_encoding = true;
+
     if (isBinary) {
         mAsset->SetAsBinary();
     }
@@ -602,7 +605,7 @@ void glTF2Exporter::ExportMaterials()
     for (unsigned int i = 0; i < mScene->mNumMaterials; ++i) {
         const aiMaterial* mat = mScene->mMaterials[i];
 
-        std::string id = "material_" + to_string(i);
+        std::string id = "material_" + ai_to_string(i);
 
         Ref<Material> m = mAsset->materials.Create(id);
 
@@ -955,6 +958,7 @@ void glTF2Exporter::ExportMeshes()
         m->name = name;
 
         p.material = mAsset->materials.Get(aim->mMaterialIndex);
+        p.ngonEncoded = (aim->mPrimitiveTypes & aiPrimitiveType_NGONEncodingFlag) != 0;
 
 		/******************* Vertices ********************/
 		Ref<Accessor> v = ExportData(*mAsset, meshId, b, aim->mNumVertices, aim->mVertices, AttribType::VEC3, AttribType::VEC3, ComponentType_FLOAT, BufferViewTarget_ARRAY_BUFFER);
@@ -1393,7 +1397,7 @@ void glTF2Exporter::ExportAnimations()
         for (unsigned int channelIndex = 0; channelIndex < anim->mNumChannels; ++channelIndex) {
             const aiNodeAnim* nodeChannel = anim->mChannels[channelIndex];
 
-            std::string name = nameAnim + "_" + to_string(channelIndex);
+            std::string name = nameAnim + "_" + ai_to_string(channelIndex);
             name = mAsset->FindUniqueID(name, "animation");
 
             Ref<Node> animNode = mAsset->nodes.Get(nodeChannel->mNodeName.C_Str());

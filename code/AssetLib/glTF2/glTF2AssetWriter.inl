@@ -507,6 +507,20 @@ namespace glTF2 {
             Mesh::Primitive& p = m.primitives[i];
             Value prim;
             prim.SetObject();
+
+            // Extensions
+            if (p.ngonEncoded)
+            {
+                Value exts;
+                exts.SetObject();
+
+                Value FB_ngon_encoding;
+                FB_ngon_encoding.SetObject();
+
+                exts.AddMember(StringRef("FB_ngon_encoding"), FB_ngon_encoding, w.mAl);
+                prim.AddMember("extensions", exts, w.mAl);
+            }
+
             {
                 prim.AddMember("mode", Value(int(p.mode)).Move(), w.mAl);
 
@@ -874,6 +888,10 @@ namespace glTF2 {
             if (this->mAsset.extensionsUsed.KHR_materials_transmission) {
                 exts.PushBack(StringRef("KHR_materials_transmission"), mAl);
             }
+
+            if (this->mAsset.extensionsUsed.FB_ngon_encoding) {
+                exts.PushBack(StringRef("FB_ngon_encoding"), mAl);
+            }
         }
 
         if (!exts.Empty())
@@ -886,6 +904,7 @@ namespace glTF2 {
         if (d.mObjs.empty()) return;
 
         Value* container = &mDoc;
+		const char* context = "Document";
 
         if (d.mExtId) {
             Value* exts = FindObject(mDoc, "extensions");
@@ -894,17 +913,18 @@ namespace glTF2 {
                 exts = FindObject(mDoc, "extensions");
             }
 
-            container = FindObject(*exts, d.mExtId);
+            container = FindObjectInContext(*exts, d.mExtId, "extensions");
             if (nullptr != container) {
                 exts->AddMember(StringRef(d.mExtId), Value().SetObject().Move(), mDoc.GetAllocator());
-                container = FindObject(*exts, d.mExtId);
+                container = FindObjectInContext(*exts, d.mExtId, "extensions");
+                context = d.mExtId;
             }
         }
 
-        Value *dict = FindArray(*container, d.mDictId);
+        Value *dict = FindArrayInContext(*container, d.mDictId, context);
         if (nullptr == dict) {
             container->AddMember(StringRef(d.mDictId), Value().SetArray().Move(), mDoc.GetAllocator());
-            dict = FindArray(*container, d.mDictId);
+            dict = FindArrayInContext(*container, d.mDictId, context);
             if (nullptr == dict) {
                 return;
             }

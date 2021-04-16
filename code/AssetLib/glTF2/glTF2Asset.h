@@ -98,12 +98,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef ASSIMP_GLTF_USE_UNORDERED_MULTIMAP
 #include <unordered_map>
 #include <unordered_set>
-#if _MSC_VER > 1600
-#define gltf_unordered_map unordered_map
-#define gltf_unordered_set unordered_set
-#else
+#if defined(_MSC_VER) && _MSC_VER <= 1600
 #define gltf_unordered_map tr1::unordered_map
 #define gltf_unordered_set tr1::unordered_set
+#else
+#define gltf_unordered_map unordered_map
+#define gltf_unordered_set unordered_set
 #endif
 #endif
 
@@ -197,7 +197,7 @@ inline unsigned int ComponentTypeSize(ComponentType t) {
     case ComponentType_UNSIGNED_BYTE:
         return 1;
     default:
-        throw DeadlyImportError("GLTF: Unsupported Component Type ", to_string(t));
+        throw DeadlyImportError("GLTF: Unsupported Component Type ", ai_to_string(t));
     }
 }
 
@@ -370,6 +370,13 @@ struct Object {
 
     //! Maps special IDs to another ID, where needed. Subclasses may override it (statically)
     static const char *TranslateId(Asset & /*r*/, const char *id) { return id; }
+
+    inline Value *FindString(Value &val, const char *id);
+    inline Value *FindNumber(Value &val, const char *id);
+    inline Value *FindUInt(Value &val, const char *id);
+    inline Value *FindArray(Value &val, const char *id);
+    inline Value *FindObject(Value &val, const char *id);
+    inline Value *FindExtension(Value &val, const char *extensionId);
 };
 
 //
@@ -780,6 +787,11 @@ struct Material : public Object {
     Material() { SetDefaults(); }
     void Read(Value &obj, Asset &r);
     void SetDefaults();
+
+    inline void SetTextureProperties(Asset &r, Value *prop, TextureInfo &out);
+    inline void ReadTextureProperty(Asset &r, Value &vals, const char *propName, TextureInfo &out);
+    inline void ReadTextureProperty(Asset &r, Value &vals, const char *propName, NormalTextureInfo &out);
+    inline void ReadTextureProperty(Asset &r, Value &vals, const char *propName, OcclusionTextureInfo &out);
 };
 
 //! A set of primitives to be rendered. A node can contain one or more meshes. A node's transform places the mesh in the scene.
@@ -801,6 +813,11 @@ struct Mesh : public Object {
             AccessorList position, normal, tangent;
         };
         std::vector<Target> targets;
+
+        // extension: FB_ngon_encoding
+        bool ngonEncoded;
+
+        Primitive(): ngonEncoded(false) {}
     };
 
     std::vector<Primitive> primitives;
@@ -1096,6 +1113,7 @@ public:
         bool KHR_materials_clearcoat;
         bool KHR_materials_transmission;
         bool KHR_draco_mesh_compression;
+        bool FB_ngon_encoding;
     } extensionsUsed;
 
     //! Keeps info about the required extensions

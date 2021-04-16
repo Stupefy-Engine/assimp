@@ -324,7 +324,7 @@ void Discreet3DSImporter::ParseObjectChunk() {
     case Discreet3DS::CHUNK_MAT_MATERIAL:
 
         // Add a new material to the list
-        mScene->mMaterials.push_back(D3DS::Material(std::string("UNNAMED_" + to_string(mScene->mMaterials.size()))));
+        mScene->mMaterials.push_back(D3DS::Material(std::string("UNNAMED_" + ai_to_string(mScene->mMaterials.size()))));
         ParseMaterialChunk();
         break;
 
@@ -981,9 +981,9 @@ void Discreet3DSImporter::ParseMeshChunk() {
         mMesh.mMat.a3 = stream->GetF4();
         mMesh.mMat.b3 = stream->GetF4();
         mMesh.mMat.c3 = stream->GetF4();
-        mMesh.mMat.a4 = stream->GetF4();
-        mMesh.mMat.b4 = stream->GetF4();
-        mMesh.mMat.c4 = stream->GetF4();
+        mMesh.mMat.d1 = stream->GetF4();
+        mMesh.mMat.d2 = stream->GetF4();
+        mMesh.mMat.d3 = stream->GetF4();
     } break;
 
     case Discreet3DS::CHUNK_MAPLIST: {
