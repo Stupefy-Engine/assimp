@@ -49,8 +49,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "STEPFileEncoding.h"
 #include <assimp/TinyFormatter.h>
 #include <assimp/fast_atof.h>
-#include <memory>
 #include <functional>
+#include <memory>
+#include <utility>
 
 using namespace Assimp;
 
@@ -87,7 +88,7 @@ static const char *ISO_Token         = "ISO-10303-21;";
 static const char *FILE_SCHEMA_Token = "FILE_SCHEMA";
 // ------------------------------------------------------------------------------------------------
 STEP::DB* STEP::ReadFileHeader(std::shared_ptr<IOStream> stream) {
-    std::shared_ptr<StreamReaderLE> reader = std::shared_ptr<StreamReaderLE>(new StreamReaderLE(stream));
+    std::shared_ptr<StreamReaderLE> reader = std::shared_ptr<StreamReaderLE>(new StreamReaderLE(std::move(stream)));
     std::unique_ptr<STEP::DB> db = std::unique_ptr<STEP::DB>(new STEP::DB(reader));
 
     LineSplitter &splitter = db->GetSplitter();
@@ -297,8 +298,8 @@ void STEP::ReadFile(DB& db,const EXPRESS::ConversionSchema& scheme,
     }
 
     if ( !DefaultLogger::isNullLogger()){
-        ASSIMP_LOG_DEBUG((Formatter::format(),"STEP: got ",map.size()," object records with ",
-            db.GetRefs().size()," inverse index entries"));
+        ASSIMP_LOG_DEBUG("STEP: got ",map.size()," object records with ",
+            db.GetRefs().size()," inverse index entries");
     }
 }
 
